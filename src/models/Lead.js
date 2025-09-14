@@ -16,7 +16,7 @@ const leadSchema = new mongoose.Schema({
   email: {
     type: String,
     required: [true, 'Email is required'],
-    unique: true,
+    unique: true, // ✅ keep this
     lowercase: true,
     trim: true,
     match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email']
@@ -92,8 +92,7 @@ const leadSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Indexes for better query performance
-leadSchema.index({ email: 1 });
+// ✅ Keep only non-duplicate indexes
 leadSchema.index({ status: 1 });
 leadSchema.index({ source: 1 });
 leadSchema.index({ score: 1 });

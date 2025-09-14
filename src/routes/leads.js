@@ -132,6 +132,27 @@ const buildFilterQuery = (filters) => {
   return query;
 };
 
+// 📌 Get lead statistics (moved before :id to avoid route conflict)
+router.get('/stats/overview', async (req, res, next) => {
+  try {
+    const [totalLeads, statusStats, sourceStats, avgScore] = await Promise.all([
+      Lead.countDocuments(),
+      Lead.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]),
+      Lead.aggregate([{ $group: { _id: '$source', count: { $sum: 1 } } }]),
+      Lead.aggregate([{ $group: { _id: null, avgScore: { $avg: '$score' } } }])
+    ]);
+
+    res.json({
+      totalLeads,
+      statusStats,
+      sourceStats,
+      avgScore: avgScore[0]?.avgScore || 0
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Get all leads with pagination and filters
 router.get('/', [
   query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
@@ -310,33 +331,6 @@ router.delete('/:id', async (req, res, next) => {
     }
 
     res.json({ message: 'Lead deleted successfully' });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Get lead statistics
-router.get('/stats/overview', async (req, res, next) => {
-  try {
-    const [totalLeads, statusStats, sourceStats, avgScore] = await Promise.all([
-      Lead.countDocuments(),
-      Lead.aggregate([
-        { $group: { _id: '$status', count: { $sum: 1 } } }
-      ]),
-      Lead.aggregate([
-        { $group: { _id: '$source', count: { $sum: 1 } } }
-      ]),
-      Lead.aggregate([
-        { $group: { _id: null, avgScore: { $avg: '$score' } } }
-      ])
-    ]);
-
-    res.json({
-      totalLeads,
-      statusStats,
-      sourceStats,
-      avgScore: avgScore[0]?.avgScore || 0
-    });
   } catch (error) {
     next(error);
   }
